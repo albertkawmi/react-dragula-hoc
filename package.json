@@ -4,8 +4,14 @@
   "description": "A higher-order React component wrapper for Dragula, drag-and-drop.",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "prebuild": "rimraf dist",
+    "build": "babel --out-dir dist src"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/albertkawmi/react-dragula-hoc.git"
@@ -41,16 +47,20 @@
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.1.3",
     "eslint-plugin-import": "^2.2.0",
-    "jest-cli": "^19.0.2"
+    "jest-cli": "^19.0.2",
+    "rimraf": "^2.6.1"
   },
   "babel": {
     "presets": [
       "es2015",
-      "stage-0"
+      "stage-0",
+      "react"
     ]
   },
   "jest": {
-    "transform": { ".*": "node_modules/babel-jest" },
+    "transform": {
+      ".*": "node_modules/babel-jest"
+    },
     "verbose": false,
     "testRegex": "tests/.*\\.test.js$",
     "automock": false,
