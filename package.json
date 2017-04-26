@@ -13,24 +13,76 @@
   "keywords": [
     "drag",
     "drop",
+    "react",
     "dragula",
-    "react-dragula",
-    "drag-and-drop",
     "dnd",
-    "react-dnd"
+    "component"
   ],
-  "author": "Albert Kawmi",
+  "author": "Albert Kawmi <albert@kawmi.co> (http://kawmi.co/)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/albertkawmi/react-dragula-hoc/issues"
   },
   "homepage": "https://github.com/albertkawmi/react-dragula-hoc#readme",
   "dependencies": {
-    "react": "^15.5.4",
-    "react-dom": "^15.5.4",
     "react-dragula": "^1.1.17"
   },
+  "peerDependencies": {
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4"
+  },
   "devDependencies": {
-    "jest": "^19.0.2"
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "babel-eslint": "^7.2.3",
+    "babel-jest": "^19.0.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.1.3",
+    "eslint-plugin-import": "^2.2.0",
+    "jest-cli": "^19.0.2"
+  },
+  "babel": {
+    "presets": [
+      "es2015",
+      "stage-0"
+    ]
+  },
+  "jest": {
+    "transform": { ".*": "node_modules/babel-jest" },
+    "verbose": false,
+    "testRegex": "tests/.*\\.test.js$",
+    "automock": false,
+    "bail": true
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "extends": "airbnb-base",
+    "ecmaFeatures": {
+      "modules": true
+    },
+    "rules": {
+      "indent": [
+        0,
+        2
+      ],
+      "no-multi-spaces": 0,
+      "no-nested-ternary": 0,
+      "new-cap": 0,
+      "no-undef": 1,
+      "vars-on-top": 0,
+      "no-unused-vars": 1,
+      "no-use-before-define": 0,
+      "comma-dangle": 0,
+      "image-uses-alt": 0,
+      "redundant-alt": 0,
+      "valid-aria-role": 0,
+      "import/prefer-default-export": 0
+    }
   }
 }
