@@ -17,15 +17,15 @@ const dndStore = {};
 export const dndContainer = ({
   idProp = DEFAULT_ID_PROP,
   containerType,
-  acceptType,
+  acceptType, // TODO: make this an array to accept multiple types
   handleClassName,
   direction = DEFAULT_DIRECTION,
-  containerScrollRate = CONTAINER_DIV_SCROLL_RATE,
-  scrollContainerAtBoundaries = false
+  scrollContainerAtBoundaries = false,
+  containerScrollRate = CONTAINER_DIV_SCROLL_RATE
 }) => (ComponentToWrap) => {
   if (!containerType) throw new Error('dndContainer must specify containerType');
   if (!acceptType) throw new Error('dndContainer must specify acceptType');
-  // TODO: improve checking for valid React component
+  // TODO: improve checking for valid React component?
   const isValidComponent = ['function', 'object'].includes(typeof ComponentToWrap);
   if (!isValidComponent) throw new Error('dndContainer must be applied to a valid React component');
 
@@ -53,8 +53,8 @@ export const dndContainer = ({
       dndStore[containerType]
       .on('drop', (el, target, source) => {
         if (!target || !source) return;
-        if (typeof this.props.onDrop !== 'function') {
-          console.warn('Invalid onDrop handler passed to drag-drop container component.');
+        if (typeof this.props.onChange !== 'function') {
+          console.warn('Invalid onChange handler passed to drag-drop container component.');
           return;
         }
         const targetId = target.getAttribute(CONTAINER_ID);
@@ -76,15 +76,14 @@ export const dndContainer = ({
           ? updatedTargetElements
           : getDraggableChildIds(source);
 
-        // TODO: remove log
-        // console.log('DROP:', this.props[idProp], targetId, sourceId);
-        this.props.onDrop({
+        this.props.onChange({
           source: { id: sourceId, elements: updatedSourceElements },
           target: { id: targetId, elements: updatedTargetElements }
         });
       })
       .on('drag', () => this.addScrollHandlers())
       .on('dragend', () => this.removeScrollHandlers());
+      // TODO: expose remaining Dragula .on event handlers
     }
     addScrollHandlers() {
       /**
@@ -135,7 +134,7 @@ export const dndContainer = ({
       if (scrollContainerAtBoundaries) {
         this.scrollParentEl = direction === 'vertical'
           ? verticalScroll(el, containerScrollRate)
-          : horizontalSrcoll(el, containerType);
+          : horizontalSrcoll(el, containerScrollRate);
       }
 
       // add container to dndStore
@@ -163,7 +162,7 @@ export const dndContainer = ({
       );
     }
   };
-}
+};
 
 export const dndElement = ({
   idProp = 'id',
@@ -183,7 +182,7 @@ export const dndElement = ({
         <WrappedComponent {...this.props} ref={this.rootRef.bind(this)}/>
       );
     }
-  }
+  };
 };
 
 // Node -> [String]
@@ -220,7 +219,7 @@ function convertToClass(StatelessComponent) {
 }
 
 function verticalScroll(parentEl, rate) {
-  return ev => {
+  return (ev) => {
     const parent = parentEl;
     const height = parent.clientHeight;
     const mousePosition = ev.pageY;
@@ -232,10 +231,10 @@ function verticalScroll(parentEl, rate) {
       parent.scrollTop += rate * (mousePosition - bottom);
     }
   };
-};
+}
 
-function horizontalSrcoll(parent, rate) {
-  return ev => {
+function horizontalSrcoll(parentEl, rate) {
+  return (ev) => {
     const parent = parentEl;
     const width = parent.clientWidth;
     const mousePosition = ev.pageX;
