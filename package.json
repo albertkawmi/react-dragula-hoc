@@ -1,0 +1,36 @@
+{
+  "name": "react-dragula-hoc",
+  "version": "0.1.0",
+  "description": "A higher-order React component wrapper for Dragula, drag-and-drop.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/albertkawmi/react-dragula-hoc.git"
+  },
+  "keywords": [
+    "drag",
+    "drop",
+    "dragula",
+    "react-dragula",
+    "drag-and-drop",
+    "dnd",
+    "react-dnd"
+  ],
+  "author": "Albert Kawmi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/albertkawmi/react-dragula-hoc/issues"
+  },
+  "homepage": "https://github.com/albertkawmi/react-dragula-hoc#readme",
+  "dependencies": {
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "react-dragula": "^1.1.17"
+  },
+  "devDependencies": {
+    "jest": "^19.0.2"
+  }
+}
