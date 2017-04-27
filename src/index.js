@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Dragula from 'react-dragula';
-
+console.log('LINKED DROP');
 const DRAGGABLE_TYPE = 'dnd-draggable-type';
 const DRAGGABLE_ID = 'dnd-draggable-id';
 const CONTAINER_TYPE = 'dnd-container-type';
@@ -49,8 +49,13 @@ export const dndContainer = ({
     rootEl = null
     scrollParentEl = null
 
-    componentWillMount() {
-      dndStore[containerType]
+    componentDidMount() {
+      const drake = dndStore[containerType];
+      if (this.previousEl) {
+        this.previousEl.remove();
+        this.previousEl = null;
+      }
+      drake
       .on('drop', (el, target, source) => {
         if (!target || !source) return;
         if (typeof this.props.onChange !== 'function') {
@@ -67,15 +72,15 @@ export const dndContainer = ({
          * TODO: investigate if this should be further optimised
          */
         if (targetId !== this.props[idProp]) return;
-
         // update the list of ids in the target container
         const updatedTargetElements = getDraggableChildIds(target);
         // update the list of ids in the source container (if different to target)
         const sourceId = source.getAttribute(CONTAINER_ID);
+        console.log('DROP ->', 'TARGET', targetId, drake.containers.indexOf(target), 'SOURCE', sourceId, drake.containers.indexOf(source));
         const updatedSourceElements = sourceId === targetId
           ? updatedTargetElements
           : getDraggableChildIds(source);
-
+        console.log('DROP', containerType, dndStore[containerType].containers.length);
         this.props.onChange({
           source: { id: sourceId, elements: updatedSourceElements },
           target: { id: targetId, elements: updatedTargetElements }
@@ -115,6 +120,10 @@ export const dndContainer = ({
       // removeScrollHandlers in case unmounts mid-drag
       this.removeScrollHandlers();
       // TODO: confirm that no further clean-up is needed
+      this.previousEl.remove();
+      this.previousEl = null;
+      this.rootEl.remove();
+      this.rootEl = null;
     }
     rootRef(component) {
       const el = ReactDOM.findDOMNode(component);
@@ -142,16 +151,18 @@ export const dndContainer = ({
         existing => existing.getAttribute(CONTAINER_ID) === id
       );
       if (existingIndex > -1) {
+        this.previousEl = containers[existingIndex];
         containers[existingIndex] = el;
       } else {
         containers.push(el);
       }
       // TODO: remove log
-      // console.log(
-      //   containerType,
-      //   el.getAttribute(CONTAINER_ID),
-      //   dndStore[containerType].containers.length
-      // );
+      console.log(
+        'REF',
+        containerType,
+        el.getAttribute(CONTAINER_ID),
+        dndStore[containerType].containers.length
+      );
     }
     render() {
       return (
