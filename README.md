@@ -16,10 +16,10 @@ npm install --save react-dragula-hoc
 ```js
 import { dndElement } from 'react-dragula-hoc';
 
-const Item = ({ id, text }) =>
+const Item = ({ text }) =>
   <li className="item">
     <span className="item__handle" />
-    <span>This item has an id {id} and some text: {text}</span>
+    <span>This item has some text: {text}</span>
   </li>
 
 const DraggableItem = dndElement({
