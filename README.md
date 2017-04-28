@@ -10,6 +10,7 @@ A [React Higher-Order Component][1] wrapper for the [Dragula][2] drag-and-drop l
 ```shell
 npm install --save react-dragula-hoc
 ```
+`react@15.x` and `react-dom@15.x` are listed as `peerDependencies` (i.e. they're expected to be in your project) but it will probably work with other versions.
 
 ## Make a component draggable
 ```js
