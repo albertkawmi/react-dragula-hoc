@@ -1,12 +1,25 @@
 # react-dragula-hoc
-A higher-order React component wrapper for Dragula, drag-and-drop.
+
+_This is not production-ready. It probably contains bugs and the API will change._
+
+A [React Higher-Order Component][1] wrapper for the [Dragula][2] drag-and-drop library.
+
+`react-dragula-hoc` hides away the imperative details of the Dragula API and presents a more declarative API, inspired by [ReactDnD][3]. ReactDnD is extremely powerful but much more low-level.
+
+## Install
+```shell
+npm install --save react-dragula-hoc
+```
+`react@15.x` and `react-dom@15.x` are listed as `peerDependencies` (i.e. they're expected to be in your project) but it will probably work with other versions.
 
 ## Make a component draggable
 ```js
-const Item = ({ id, text }) =>
+import { dndElement } from 'react-dragula-hoc';
+
+const Item = ({ text }) =>
   <li className="item">
     <span className="item__handle" />
-    <span>This item has an id {id} and some text: {text}</span>
+    <span>This item has some text: {text}</span>
   </li>
 
 const DraggableItem = dndElement({
@@ -21,6 +34,8 @@ const DraggableItem = dndElement({
 
 ## Make a container that accepts draggable components
 ```js
+import { dndContainer } from 'react-dragula-hoc';
+
 const Items = ({ children }) => <ul className="list__items">{children}</ul>;
 
 const DropItems = dndContainer({
@@ -89,16 +104,12 @@ const onChange = ({ source, target }) => {
 ```
 
 ## TODOs
-Main priorities:
-* decide on final public API
+
 * wrap the remaining Dragula options and events
+* decide on good public API
 * write unit tests
 * create an example app
 
-These are `grep`ped from code comments:
-* TODO: allow a container to accept multiple types
-* TODO: improve checking for valid React component?
-* TODO: investigate if this should be further optimised
-* TODO: expose remaining Dragula `.on` event handlers
-* TODO: confirm that no further clean-up is needed
-* TODO: does it _have_ to be immediate children?
+[1]: https://facebook.github.io/react/docs/higher-order-components.html
+[2]: https://github.com/bevacqua/dragula
+[3]: https://github.com/react-dnd/react-dnd
