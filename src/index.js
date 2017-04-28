@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Dragula from 'react-dragula';
-console.log('LINKED DROP');
+
 const DRAGGABLE_TYPE = 'dnd-draggable-type';
 const DRAGGABLE_ID = 'dnd-draggable-id';
 const CONTAINER_TYPE = 'dnd-container-type';
@@ -47,50 +47,54 @@ export const dndContainer = ({
   return class extends Component {
     // these are set in the rootRef method
     rootEl = null
-    scrollParentEl = null
+    scrollParentHandler = null
+
+    // pointer to the Dragula instance for this containerType
+    drake = null;
 
     componentDidMount() {
-      const drake = dndStore[containerType];
-      if (this.previousEl) {
-        this.previousEl.remove();
-        this.previousEl = null;
-      }
-      drake
-      .on('drop', (el, target, source) => {
-        if (!target || !source) return;
-        if (typeof this.props.onChange !== 'function') {
-          console.warn('Invalid onChange handler passed to drag-drop container component.');
-          return;
-        }
-        const targetId = target.getAttribute(CONTAINER_ID);
-        /**
-         * NOTE:
-         * the on 'drop' handler fires for _ALL_ containers
-         * the next line prevents any further work being done for
-         * unrelated containers.
-         *
-         * TODO: investigate if this should be further optimised
-         */
-        if (targetId !== this.props[idProp]) return;
-        // update the list of ids in the target container
-        const updatedTargetElements = getDraggableChildIds(target);
-        // update the list of ids in the source container (if different to target)
-        const sourceId = source.getAttribute(CONTAINER_ID);
-        console.log('DROP ->', 'TARGET', targetId, drake.containers.indexOf(target), 'SOURCE', sourceId, drake.containers.indexOf(source));
-        const updatedSourceElements = sourceId === targetId
-          ? updatedTargetElements
-          : getDraggableChildIds(source);
-        console.log('DROP', containerType, dndStore[containerType].containers.length);
-        this.props.onChange({
-          source: { id: sourceId, elements: updatedSourceElements },
-          target: { id: targetId, elements: updatedTargetElements }
-        });
-      })
-      .on('drag', () => this.addScrollHandlers())
-      .on('dragend', () => this.removeScrollHandlers());
+      this.drake = dndStore[containerType];
+      /**
+       * NOTE:
+       * any .on event handlers setup here _must_ be removed
+       * in componentWillUnmount
+       */
+      this.drake
+      .on('drop', this.onDrop)
+      .on('drag', this.addScrollHandlers)
+      .on('dragend', this.removeScrollHandlers);
       // TODO: expose remaining Dragula .on event handlers
     }
-    addScrollHandlers() {
+    onDrop = (el, target, source) => {
+      if (!target || !source) return;
+      if (typeof this.props.onChange !== 'function') {
+        console.warn('Invalid onChange handler passed to drag-drop container component.');
+        return;
+      }
+      const targetId = target.getAttribute(CONTAINER_ID);
+      /**
+       * NOTE:
+       * the on 'drop' handler fires for _ALL_ containers
+       * the next line prevents any further work being done for
+       * unrelated containers.
+       *
+       * TODO: investigate if this should be further optimised
+       */
+      if (targetId !== this.props[idProp]) return;
+      // update the list of ids in the target container
+      const updatedTargetElements = getDraggableChildIds(target);
+      // update the list of ids in the source container (if different to target)
+      const sourceId = source.getAttribute(CONTAINER_ID);
+      const updatedSourceElements = sourceId === targetId
+        ? updatedTargetElements
+        : getDraggableChildIds(source);
+
+      this.props.onChange({
+        source: { id: sourceId, elements: updatedSourceElements },
+        target: { id: targetId, elements: updatedTargetElements }
+      });
+    }
+    addScrollHandlers = () => {
       /**
        * Scroll parent element when dragged item is at the top or bottom.
        * This is to allow dragging within fixed-height scrolling containers.
@@ -99,15 +103,15 @@ export const dndContainer = ({
        * This is applied to every container element on the page.
        * 1000 containers => 2000 event listeners
        */
-      if (this.scrollParentEl) {
-        document.addEventListener('mousemove', this.scrollParentEl);
-        document.addEventListener('touchmove', this.scrollParentEl);
+      if (this.scrollParentHandler) {
+        document.addEventListener('mousemove', this.scrollParentHandler);
+        document.addEventListener('touchmove', this.scrollParentHandler);
       }
     }
-    removeScrollHandlers() {
-      if (this.scrollParentEl) {
-        document.removeEventListener('mousemove', this.scrollParentEl);
-        document.removeEventListener('touchmove', this.scrollParentEl);
+    removeScrollHandlers = () => {
+      if (this.scrollParentHandler) {
+        document.removeEventListener('mousemove', this.scrollParentHandler);
+        document.removeEventListener('touchmove', this.scrollParentHandler);
       }
     }
     componentWillUnmount() {
@@ -119,11 +123,14 @@ export const dndContainer = ({
       );
       // removeScrollHandlers in case unmounts mid-drag
       this.removeScrollHandlers();
+
+      // remove any drake.on event handlers
+      this.drake.off('drop', this.onDrop);
+      if (scrollContainerAtBoundaries) {
+        this.drake.off('drag', this.addScrollHandlers);
+        this.drake.off('dragend', this.removeScrollHandlers);
+      }
       // TODO: confirm that no further clean-up is needed
-      this.previousEl.remove();
-      this.previousEl = null;
-      this.rootEl.remove();
-      this.rootEl = null;
     }
     rootRef(component) {
       const el = ReactDOM.findDOMNode(component);
@@ -131,7 +138,7 @@ export const dndContainer = ({
 
       // assign container ids
       const id = this.props[idProp];
-      el.setAttribute(CONTAINER_TYPE, containerType)
+      el.setAttribute(CONTAINER_TYPE, containerType);
       el.setAttribute(CONTAINER_ID, id);
 
       const { containers } = dndStore[containerType];
@@ -141,7 +148,7 @@ export const dndContainer = ({
 
       // setup container scroll handler if needed
       if (scrollContainerAtBoundaries) {
-        this.scrollParentEl = direction === 'vertical'
+        this.scrollParentHandler = direction === 'vertical'
           ? verticalScroll(el, containerScrollRate)
           : horizontalSrcoll(el, containerScrollRate);
       }
@@ -151,18 +158,10 @@ export const dndContainer = ({
         existing => existing.getAttribute(CONTAINER_ID) === id
       );
       if (existingIndex > -1) {
-        this.previousEl = containers[existingIndex];
         containers[existingIndex] = el;
       } else {
         containers.push(el);
       }
-      // TODO: remove log
-      console.log(
-        'REF',
-        containerType,
-        el.getAttribute(CONTAINER_ID),
-        dndStore[containerType].containers.length
-      );
     }
     render() {
       return (
@@ -187,6 +186,11 @@ export const dndElement = ({
       if (!el) return;
       el.setAttribute(DRAGGABLE_ID, this.props[idProp]);
       el.setAttribute(DRAGGABLE_TYPE, type);
+      this.rootEl = el;
+    }
+    componentWillUnmount() {
+      // TODO: check this is actually needed
+      if (this.rootEl) this.rootEl.remove();
     }
     render() {
       return (
@@ -229,6 +233,7 @@ function convertToClass(StatelessComponent) {
   };
 }
 
+// TODO: DRY up verticalScroll and horizontalScroll
 function verticalScroll(parentEl, rate) {
   return (ev) => {
     const parent = parentEl;
