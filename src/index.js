@@ -2,17 +2,27 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Dragula from 'react-dragula';
 
+// Drag-and-drop constants
 const DRAGGABLE_TYPE = 'dnd-draggable-type';
 const DRAGGABLE_ID = 'dnd-draggable-id';
 const CONTAINER_TYPE = 'dnd-container-type';
 const CONTAINER_ID = 'dnd-container-id';
-const CONTAINER_DIV_SCROLL_RATE = 0.2;
 
+// Default values
 const DEFAULT_DIRECTION = 'vertical';
 const DEFAULT_ID_PROP = 'id';
+const SCROLL_BOUNDARIES = false;
+const CONTAINER_DIV_SCROLL_RATE = 0.2;
 
+// Error messages
+const ERR_CONTAINER_TYPE = 'dndContainer must specify containerType';
+const ERR_ACCEPT_TYPE = 'dndContainer must specify acceptType';
+const ERR_VALID_COMPONENT = 'dndContainer must be applied to a valid React component';
+const WARN_INVALID_ONCHANGE = 'Invalid onChange handler passed to drag-drop container component.';
+
+// Dragula Store:
 // Needs to be a global store to allow drag-drop across multiple instances
-const dndStore = {};
+const dragulaStore = {};
 
 export const dndContainer = ({
   idProp = DEFAULT_ID_PROP,
@@ -20,19 +30,19 @@ export const dndContainer = ({
   acceptType, // TODO: make this an array to accept multiple types
   handleClassName,
   direction = DEFAULT_DIRECTION,
-  scrollContainerAtBoundaries = false,
+  scrollContainerAtBoundaries = SCROLL_BOUNDARIES,
   containerScrollRate = CONTAINER_DIV_SCROLL_RATE
 }) => (ComponentToWrap) => {
-  if (!containerType) throw new Error('dndContainer must specify containerType');
-  if (!acceptType) throw new Error('dndContainer must specify acceptType');
+  if (!containerType) throw new Error(ERR_CONTAINER_TYPE);
+  if (!acceptType) throw new Error(ERR_ACCEPT_TYPE);
   // TODO: improve checking for valid React component?
-  const isValidComponent = ['function', 'object'].includes(typeof ComponentToWrap);
-  if (!isValidComponent) throw new Error('dndContainer must be applied to a valid React component');
+  const isValidComponent = ['object', 'function'].includes(typeof ComponentToWrap);
+  if (!isValidComponent) throw new Error(ERR_VALID_COMPONENT);
 
   const WrappedComponent = ensureClassComponent(ComponentToWrap);
 
-  if (!dndStore[containerType]) {
-    dndStore[containerType] = Dragula([], {
+  if (!dragulaStore[containerType]) {
+    dragulaStore[containerType] = Dragula([], {
       accepts(el, target) {
         return el.getAttribute(DRAGGABLE_TYPE) === acceptType
           && target.getAttribute(CONTAINER_TYPE) === containerType;
@@ -45,15 +55,15 @@ export const dndContainer = ({
     });
   }
   return class extends Component {
-    // these are set in the rootRef method
-    rootEl = null
-    scrollParentHandler = null
-
-    // pointer to the Dragula instance for this containerType
-    drake = null;
-
+    constructor(props) {
+      super(props);
+      // these are set in the rootRef method
+      this.rootEl = null;
+      this.scrollParentHandler = null;
+      // pointer to the Dragula instance for this containerType
+      this.drake = dragulaStore[containerType];
+    }
     componentDidMount() {
-      this.drake = dndStore[containerType];
       /**
        * NOTE:
        * any .on event handlers setup here _must_ be removed
@@ -66,12 +76,14 @@ export const dndContainer = ({
       // TODO: expose remaining Dragula .on event handlers
     }
     onDrop = (el, target, source) => {
-      if (!target || !source) return;
       if (typeof this.props.onChange !== 'function') {
-        console.warn('Invalid onChange handler passed to drag-drop container component.');
+        console.warn(WARN_INVALID_ONCHANGE);
         return;
       }
+      if (!target || !source) return;
+
       const targetId = target.getAttribute(CONTAINER_ID);
+
       /**
        * NOTE:
        * the on 'drop' handler fires for _ALL_ containers
@@ -116,7 +128,7 @@ export const dndContainer = ({
     }
     componentWillUnmount() {
       // remove dragula container reference
-      const { containers } = dndStore[containerType];
+      const { containers } = dragulaStore[containerType];
       containers.splice(
         containers.indexOf(this.rootEl),
         1
@@ -136,15 +148,13 @@ export const dndContainer = ({
       const el = ReactDOM.findDOMNode(component);
       if (!el) return;
 
+      // save DOM reference for cleanup later
+      this.rootEl = el;
+
       // assign container ids
       const id = this.props[idProp];
       el.setAttribute(CONTAINER_TYPE, containerType);
       el.setAttribute(CONTAINER_ID, id);
-
-      const { containers } = dndStore[containerType];
-
-      // save DOM reference for cleanup later
-      this.rootEl = el;
 
       // setup container scroll handler if needed
       if (scrollContainerAtBoundaries) {
@@ -153,7 +163,8 @@ export const dndContainer = ({
           : horizontalSrcoll(el, containerScrollRate);
       }
 
-      // add container to dndStore
+      // add container to dragulaStore
+      const { containers } = dragulaStore[containerType];
       const existingIndex = containers.findIndex(
         existing => existing.getAttribute(CONTAINER_ID) === id
       );
