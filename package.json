@@ -1,6 +1,6 @@
 {
   "name": "react-dragula-hoc",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A higher-order React component wrapper for Dragula, drag-and-drop.",
   "main": "dist/index.js",
   "scripts": {
