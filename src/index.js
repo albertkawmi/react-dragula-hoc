@@ -164,11 +164,17 @@ export const dndContainer = ({
       }
     }
     render() {
+      const { children } = this.props;
+      const numberOfChildren = React.Children.count(children);
+
+      // key will force re-render when numberOfChildren changes
+      // this is needed so that React doesn't unexpectedly 'lose' elements
+      const key = `${containerType}-${numberOfChildren}`;
       return (
         <WrappedComponent
           {...this.props}
           ref={this.rootRef.bind(this)}
-          key={`${containerType}-${this.props.children.length}`} />
+          key={key} />
       );
     }
   };
